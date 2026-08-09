@@ -20,7 +20,7 @@ const project = new awscdk.AwsCdkTypeScriptApp({
     ],
     // The name of the secret that has the GitHub PAT for auto-approving PRs with permissions repo, workflow, write:packages
     // Generate a new PAT (https://github.com/settings/tokens/new) and add it to your repo's secrets
-    // NOTE: comes from MV-Consulting Org
+    // NOTE: comes from the mavogel Org
     secret: 'PROJEN_GITHUB_TOKEN',
   },
   dependabot: true,
@@ -79,7 +79,7 @@ const project = new awscdk.AwsCdkTypeScriptApp({
 // projen's AutoMerge component hardcodes `delete_head_branch: {}` in the
 // mergify rule with no option to disable it. Strip it from the generated
 // .mergify.yml so Mergify does not delete head branches on merge.
-// see https://github.com/MV-Consulting/s3-cdk-assets-bootstrap/pull/265
+// see https://github.com/mavogel/s3-cdk-assets-bootstrap/pull/265
 project.tryFindObjectFile('.mergify.yml')?.addDeletionOverride(
   'pull_request_rules.0.actions.delete_head_branch',
 );
