@@ -1710,9 +1710,9 @@ aws-cdk-lib@^2.1.0:
     yaml "1.10.3"
 
 aws-cdk@^2:
-  version "2.1135.0"
-  resolved "https://registry.yarnpkg.com/aws-cdk/-/aws-cdk-2.1135.0.tgz#4b53b12e9b0fbe721a6f82de1f3639eee3e5a0f2"
-  integrity sha512-Vfz2kllheB+8y9audOtcw0qo0v6EnjxfO2pK7x6eSulHmD0GaAvkqrg6MF+20wxE2KTyuY1UDBzICO+nHUaFtA==
+  version "2.1136.0"
+  resolved "https://registry.yarnpkg.com/aws-cdk/-/aws-cdk-2.1136.0.tgz#e402e5d213bd50974d5812a564ebf77728b053e4"
+  integrity sha512-n6kCL9R9uuvb7WXEwiSs3rYGwnTy9AHHmxOT5Pj5/++E4PYz2bLDXIxzoiOMIj5maoyC52PTe/0GezFV+O0ILQ==
 
 babel-jest@30.4.1:
   version "30.4.1"
