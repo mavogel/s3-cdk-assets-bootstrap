@@ -89,6 +89,21 @@ project.tryFindObjectFile('.mergify.yml')?.addDeletionOverride(
   'pull_request_rules.0.actions.delete_head_branch',
 );
 
+// projen's AutoMerge component hardcodes the deprecated `commit_message_template`
+// queue rule field with no option to configure it. Mergify requires migrating to
+// the declarative `commit_message_format` by 2026-09-30, so replace it here.
+// see https://docs.mergify.com/workflow/actions/merge#migrating-from-commit_message_template
+project.tryFindObjectFile('.mergify.yml')?.addDeletionOverride(
+  'queue_rules.0.commit_message_template',
+);
+project.tryFindObjectFile('.mergify.yml')?.addOverride(
+  'queue_rules.0.commit_message_format',
+  {
+    title: 'pr-title',
+    body: 'pr-body',
+  },
+);
+
 // Should 'mvc-bot' (PROJEN_GITHUB_TOKEN) ever author a PR itself (e.g. a
 // future upgrade-projen workflow), auto-approve.yml can't approve it - same
 // identity opening and approving is a self-approval, which GitHub rejects
