@@ -21,5 +21,13 @@ pull_request_rules:
       - "#approved-reviews-by>=1"
       - -label~=(do-not-merge)
       - status-success=build
+  - name: Auto-approve self-authored upgrade-projen PRs
+    conditions:
+      - author=mvc-bot
+      - label=auto-approve
+    actions:
+      review:
+        type: APPROVE
+        message: "Automatically approved: self-authored projen upgrade PR."
 merge_queue:
   max_parallel_checks: 1

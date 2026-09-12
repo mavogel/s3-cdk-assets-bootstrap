@@ -11,12 +11,17 @@ const project = new awscdk.AwsCdkTypeScriptApp({
     'aws-cdk-github-oidc@v2.4.1',
   ],
   autoApproveOptions: {
+    // 'mvc-bot' (the PROJEN_GITHUB_TOKEN identity) is deliberately excluded:
+    // if it ever authors a PR itself (e.g. a future upgrade-projen workflow),
+    // GitHub rejects a review from the same account that authored the PR
+    // ("Can not approve your own pull request"). Such PRs are auto-approved
+    // via Mergify instead, which posts the review as the Mergify app, a
+    // different actor. See https://github.com/mavogel/mvc-projen/pull/74.
     allowedUsernames: [
       'dependabot',
       'dependabot[bot]',
       'github-bot',
       'github-actions[bot]',
-      'mvc-bot',
     ],
     // The name of the secret that has the GitHub PAT for auto-approving PRs with permissions repo, workflow, write:packages
     // Generate a new PAT (https://github.com/settings/tokens/new) and add it to your repo's secrets
@@ -82,6 +87,30 @@ const project = new awscdk.AwsCdkTypeScriptApp({
 // see https://github.com/mavogel/s3-cdk-assets-bootstrap/pull/265
 project.tryFindObjectFile('.mergify.yml')?.addDeletionOverride(
   'pull_request_rules.0.actions.delete_head_branch',
+);
+
+// Should 'mvc-bot' (PROJEN_GITHUB_TOKEN) ever author a PR itself (e.g. a
+// future upgrade-projen workflow), auto-approve.yml can't approve it - same
+// identity opening and approving is a self-approval, which GitHub rejects
+// (see autoApproveOptions above). Have Mergify approve these instead: it
+// posts the review as the Mergify app, satisfying the queue's
+// `#approved-reviews-by>=1` condition without a self-approval.
+// see https://github.com/mavogel/mvc-projen/pull/74
+project.tryFindObjectFile('.mergify.yml')?.addOverride(
+  'pull_request_rules.1',
+  {
+    name: 'Auto-approve self-authored upgrade-projen PRs',
+    conditions: [
+      'author=mvc-bot',
+      'label=auto-approve',
+    ],
+    actions: {
+      review: {
+        type: 'APPROVE',
+        message: 'Automatically approved: self-authored projen upgrade PR.',
+      },
+    },
+  },
 );
 
 project.synth();
