@@ -20,3 +20,5 @@ updates:
         exclude-patterns:
           - aws-cdk*
           - projen
+    cooldown:
+      default-days: 7
