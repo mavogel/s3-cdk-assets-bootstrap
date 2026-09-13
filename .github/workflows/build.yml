@@ -23,7 +23,7 @@ jobs:
           persist-credentials: false
       - name: Install dependencies
         id: install_dependencies
-        run: yarn install --check-files
+        run: npm install
       - name: build
         id: build
         run: npx projen build

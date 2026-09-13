@@ -6,9 +6,7 @@ const project = new awscdk.AwsCdkTypeScriptApp({
   defaultReleaseBranch: 'main',
   name: 's3-cdk-assets-bootstrap',
   projenrcTs: true,
-  // Kept explicit to preserve the repo's existing yarn.lock-based toolchain
-  // - a newer projen otherwise warns and defaults this.
-  packageManager: javascript.NodePackageManager.YARN_CLASSIC,
+  packageManager: javascript.NodePackageManager.NPM,
   description: 'A CDK app that creates your public S3 buckets in all regions.',
 
   deps: [
