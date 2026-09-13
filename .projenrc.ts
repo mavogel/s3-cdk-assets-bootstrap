@@ -1,10 +1,14 @@
-import { awscdk, ReleasableCommits } from 'projen';
+import { awscdk, javascript, ReleasableCommits, YamlFile } from 'projen';
 import { DependabotScheduleInterval } from 'projen/lib/github';
+import { JobStep } from 'projen/lib/github/workflows-model';
 const project = new awscdk.AwsCdkTypeScriptApp({
   cdkVersion: '2.1.0',
   defaultReleaseBranch: 'main',
   name: 's3-cdk-assets-bootstrap',
   projenrcTs: true,
+  // Kept explicit to preserve the repo's existing yarn.lock-based toolchain
+  // - a newer projen otherwise warns and defaults this.
+  packageManager: javascript.NodePackageManager.YARN_CLASSIC,
   description: 'A CDK app that creates your public S3 buckets in all regions.',
 
   deps: [
@@ -39,6 +43,12 @@ const project = new awscdk.AwsCdkTypeScriptApp({
       },
     },
     ignore: [{ dependencyName: 'aws-cdk-lib' }],
+    // zizmor's dependabot-cooldown audit flags a default cooldown under
+    // 7 days as insufficient time to catch a compromised release.
+    // https://docs.zizmor.sh/audits/#dependabot-cooldown
+    cooldown: {
+      defaultDays: 7,
+    },
   },
   // // See https://github.com/projen/projen/discussions/4040#discussioncomment-11905628
   releasableCommits: ReleasableCommits.ofType([
@@ -127,5 +137,54 @@ project.tryFindObjectFile('.mergify.yml')?.addOverride(
     },
   },
 );
+
+// Stop the read-only checkout in build.yml's `build` job from persisting a
+// git credential on the runner - per zizmor's artipacked audit
+// (https://docs.zizmor.sh/audits/#artipacked). `self-mutation`'s checkout is
+// left as-is: it relies on the persisted credential to `git push` its patch
+// back to the PR branch.
+const buildWorkflow = project.github?.tryFindWorkflow('build');
+const buildJob = buildWorkflow?.getJob('build');
+if (buildWorkflow && buildJob && 'steps' in buildJob) {
+  // `job.steps` is a bound accessor function until a job's first
+  // `updateJob()` call, after which it becomes a plain array - resolve it
+  // defensively rather than assuming either shape.
+  const rawSteps = buildJob.steps as unknown as JobStep[] | (() => JobStep[]);
+  const currentSteps = typeof rawSteps === 'function' ? rawSteps() : rawSteps;
+  buildWorkflow.updateJob('build', {
+    ...buildJob,
+    steps: currentSteps.map((step) =>
+      step.uses?.startsWith('actions/checkout@')
+        ? { ...step, with: { ...step.with, 'persist-credentials': false } }
+        : step,
+    ),
+  });
+}
+
+// zizmor's dangerous-triggers audit flags any pull_request_target trigger.
+// Both workflows below only inspect PR metadata (label, actor, title) and
+// never check out or execute PR code - safe as-is.
+// https://docs.zizmor.sh/audits/#dangerous-triggers
+// build.yml's `self-mutation` job needs the checkout's persisted credential
+// to `git push` its patch back to the PR branch. The line number is specific
+// to this workflow's current shape; re-check it against `zizmor .` output if
+// build.yml's job order changes.
+new YamlFile(project, '.github/zizmor.yml', {
+  obj: {
+    rules: {
+      'dangerous-triggers': {
+        ignore: [
+          'auto-approve.yml',
+          'pull-request-lint.yml',
+        ],
+      },
+      'artipacked': {
+        ignore: [
+          'build.yml:59',
+        ],
+      },
+    },
+  },
+});
 
 project.synth();
